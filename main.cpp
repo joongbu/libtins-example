@@ -26,113 +26,52 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
 #include <iostream>
+#include <stdio.h>
 #include <set>
 #include <string>
 #include <tins/tins.h>
+#include <thread>
+#include <time.h>
+using std::cin;
 using std::set;
 using std::cout;
 using std::endl;
 using std::string;
 using std::runtime_error;
 using namespace Tins;
-
-//class Beaconsniffer
-struct AP_info
+typedef Dot11::address_type address_type; //mac address
+typedef set<address_type> ssids_type; //ssid
+ssids_type ssids;
+string interface;
+struct student
 {
-    string AP_name[50];
-    string AP_mac[50];
+    string name;
+    address_type mac;
+
 };
-
-class BeaconSniffer {
-public:
-    void run(const string& iface);
-private:
-    typedef Dot11::address_type address_type; //mac address
-    typedef set<address_type> ssids_type; //ssid
-
-    bool callback(PDU& pdu);
-
-    ssids_type ssids;
-};
-
-
-void BeaconSniffer::run(const std::string& iface) {
-    SnifferConfiguration config;
-    config.set_promisc_mode(true); //?
-    config.set_filter("type mgt subtype beacon"); //
-    config.set_rfmon(true);
-    Sniffer sniffer(iface, config);
-    sniffer.sniff_loop(make_sniffer_handler(this, &BeaconSniffer::callback));
-
-}
-
-bool BeaconSniffer::callback(PDU& pdu) {
-    // Get the Dot11 layer
-    const Dot11Beacon& beacon = pdu.rfind_pdu<Dot11Beacon>();
-    AP_info *AP;
-    // All beacons must have from_ds == to_ds == 0
-    if (!beacon.from_ds() && !beacon.to_ds())
-    {
-        // Get the AP address
-        address_type addr = beacon.addr2(); //802.11 header second mac address sniffing
-        // Look it up in our set
-        ssids_type::iterator it = ssids.find(addr);
-        if (it == ssids.end()) {
-            // First time we encounter this BSSID.
-            try {
-                /* If no ssid option is set, then Dot11::ssid will throw
-                 * a std::runtime_error.
-                 */
-                string ssid = beacon.ssid();
-                ssids.insert(addr); //save address
-                // Save it so we don't show it again.
-                // Display the tuple "address - ssid".
-                cout << addr << " - " << ssid << endl; //get AP SSID , MAC
-            }
-            catch (runtime_error&) {
-                // No ssid, just ignore it.
-            }
-        }
-    }
-    return true;
-}
-
-
 class probeSniffer {
 public:
     void running(const string& iface);
 private:
-    typedef Dot11::address_type address_type; //mac address
-    typedef set<address_type> ssids_type; //ssid
-
+    bool timeclear();
     bool call(PDU& pdu);
-
-    ssids_type ssids;
 };
-
 void probeSniffer::running(const std::string& iface) {
     SnifferConfiguration config;
-    config.set_promisc_mode(true); //?
-    //config.set_filter("type mgt subtype beacon");
+    config.set_promisc_mode(true);
     config.set_rfmon(true);
     Sniffer sniffer(iface, config);
     sniffer.sniff_loop(make_sniffer_handler(this, &probeSniffer::call));
-
 }
-
 bool probeSniffer::call(PDU& pdu) {
     // Get the Dot11 layer
     const Dot11ProbeRequest& probe = pdu.rfind_pdu<Dot11ProbeRequest>();
-
     // Get the AP address
     address_type addr = probe.addr2(); //802.11 header second mac address sniffing
-
     // Look it up in our set
     ssids_type::iterator it = ssids.find(addr);
     if (it == ssids.end()) {
-
         // First time we encounter this BSSID.
         try {
             /* If no ssid option is set, then Dot11::ssid will throw
@@ -142,7 +81,6 @@ bool probeSniffer::call(PDU& pdu) {
             // Save it so we don't show it again.
             ssids.insert(addr); //save address
             // Display the tuple "address - ssid".
-            cout<<"==================================="<<endl;
             cout << addr << " - " << ssid << endl; //get AP SSID , MAC
 
         }
@@ -150,17 +88,77 @@ bool probeSniffer::call(PDU& pdu) {
             // No ssid, just ignore it.
         }
     }
+
     return true;
 }
+/*
+bool probeSniffer::timeclear()
+{
+    if(sleep(300))
+        true;
+    false;
+}
+*/
+class stu_info
+{
+
+public :
+    int number;
+    stu_info();
+    student info[1000];
+    void saveinfo();
+    void attendence();
+};
+void stu_info::attendence()
+{
+    time_t now;
+    time(&now);
+    int i;
+    for(i  = 0 ; i < number ; i++)
+    {
+        ssids_type::iterator it = ssids.find(info[i].mac);
+        if(it == ssids.end())
+            cout<<info[i].name<<ctime(&now)<<endl;
+        else
+            cout<<info[i].name<<"not attendence"<<endl;
+
+    }
+}
+
+void stu_info::saveinfo()
+{
+    int i;
+    cout<<"input number of people :";
+    cin >> number;
+
+    for(i = 0 ; i < number ; i++)
+    {
+        cout<<"input student name :";
+        cin>>info[i].name;
+        cout<<endl;
+        cout<<"input student mac address";
+        scanf("%s",&info[i].mac);
+
+    }
+    attendence();
+
+}
+
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         cout << "Usage: " <<* argv << " <interface>" << endl;
         return 1;
     }
-    string interface = argv[1];
-    BeaconSniffer sniffer;
-    probeSniffer  probe;
-    //sniffer.run(interface);
-    probe.running(interface); //find probe request packet
+
+    // search probe request
+    interface = argv[1];
+    cout<<"getting probe request packet.............."<<endl;
+    std::thread([] {
+        probeSniffer  probe;
+        probe.running(interface);
+    }).detach();
+    stu_info student_information;
+    student_information.saveinfo();
+
 }

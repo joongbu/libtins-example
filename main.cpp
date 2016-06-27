@@ -113,7 +113,8 @@ void stu_info::time_log()
     for(i = 0 ; i < size ; i++)
     {
         try{
-            cout<<"name :"<<stu[i].name<<"start time :"<<stu[i].s_time<<"last time :"<<stu[i].l_time<<endl;
+            cout<<"name :"<<stu[i].name<<endl;
+            cout<<"start time :"<<stu[i].s_time<<"last time :"<<stu[i].l_time<<endl;
         }
         catch(runtime_error&) {
             // No ssid, just ignore it.
@@ -145,30 +146,26 @@ bool probeSniffer::call(PDU& pdu) {
     stu_info info;
     ssids_type::iterator it = ssids.find(addr);
     int i;
-    if (it == ssids.end()) {
+    if (it != ssids.end()) {
         // First time we encounter this BSSID.
         try {
-            /* If no ssid option is set, then Dot11::ssid will throw
-                 * a std::runtime_error.
-                 */
-            // Save it so we don't show it again.
-            ssids.insert(addr); //save address
-            // Display the tuple "address - ssid".
             //info.time_log();
             for(i = 0; i<size ; i++)
             {
-                if(addr == stu[i].mac)
-                {stu[i].check = true;
+                if(addr == stu[i].mac && stu[i].s_time == "0")
+                {
+                    stu[i].check = true;
                     stu[i].s_time = ctime(&now);
                 }
                 it = ssids.find(stu[i].mac);
-                if(it == ssids.end())
+                if(addr == stu[i].mac && stu[i].l_time == "0")
+                    stu[i].l_time = ctime(&now);
+                if(addr == stu[i].mac && stu[i].l_time != "0")
                     stu[i].l_time = ctime(&now);
             }
 
         }
         catch (runtime_error&) {
-            // No ssid, just ignore it.
         }
         return true;
     }
@@ -193,8 +190,8 @@ int main(int argc, char* argv[]) {
     stu[1].name="백종열";
     stu[1].mac ="64:bc:0c:68:e5:71";
     stu[2].name ="이혜빈";
-    stu[3].mac = "48:59:29:f4:a5:87";
-    for(i=0; i<size ; i++)
+    stu[2].mac = "48:59:29:f4:a5:87";
+    for(i=0;i<size;i++)
     {
         ssids_type::iterator it = ssids.find(stu[i].mac);
         if(it == ssids.end()){
@@ -206,10 +203,34 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+    int select;
     while(1)
     {
-        //student_information.attendance();
-        student_information.time_log();
+        printf("\e[1;1H\e[2J");
+        cout<<"0. let's save student impormation"<<endl;
+        cout<<"1. view student attendance"<<endl;
+        cout<<"2. view student attendance log"<<endl;
+        cout<<"3. quit(0)"<<endl;
+        cin>>select;
+        switch(select)
+        {
+        case 0 :
+            printf("\e[1;1H\e[2J");
+            //student_information.save_info();
+            break;
+        case 1:
+            printf("\e[1;1H\e[2J");
+            student_information.attendance();
+            break;
+        case 2:
+            printf("\e[1;1H\e[2J");
+            student_information.time_log();
+            break;
+        case 3:
+            printf("\e[1;1H\e[2J");
+            break;
+        }
+        if(select == 3) break;
         sleep(10);
     }
 }

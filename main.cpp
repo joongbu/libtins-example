@@ -41,11 +41,20 @@ public :
     void save_info();
     void attendance();
     void time_log();
+    friend istream & operator>>(istream &is);
+
+
 private:
 
 
 };
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+istream &operator>>(isstram &is);
+{
+    typedef Dot11::address_type address_type; //mac address
 
+}
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void stu_info::save_info()
 {
     int i ;
@@ -54,8 +63,8 @@ void stu_info::save_info()
         cout<<"input student name :";
         cin>>stu[i].name;
         cout<<"input student mac address :";
-        //cin>>stu.mac;
-        scanf("%s",&stu[i].mac);
+        //cin>>stu[i].mac;
+        //scanf("%s",&stu[i].mac);
         ssids_type::iterator it = ssids.find(stu[i].mac);
         if(it == ssids.end()){
             try{

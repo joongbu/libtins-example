@@ -1,31 +1,3 @@
-/*
- * Copyright (c) 2016, Matias Fontanini
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * * Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above
- *   copyright notice, this list of conditions and the following disclaimer
- *   in the documentation and/or other materials provided with the
- *   distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
 #include <iostream>
 #include <stdio.h>
 #include <set>
@@ -34,6 +6,8 @@
 #include <thread>
 #include <time.h>
 #include <unistd.h>
+#include <mysql/mysql.h>
+#include <errno.h>
 using std::cin;
 using std::set;
 using std::cout;
@@ -47,7 +21,6 @@ ssids_type ssids;
 string interface;
 /*=======================time*/
 time_t now;
-
 /*=======================time*/
 struct student
 {
@@ -72,6 +45,7 @@ private:
 
 
 };
+
 void stu_info::save_info()
 {
     int i ;
@@ -101,9 +75,9 @@ void stu_info::attendance()
     for(i = 0 ; i<size ; i++)
     {
         if(stu[i].check == true)
-            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"class : attandence"<<endl;
+            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"  class : attendance"<<endl;
         else if(stu[i].check == false)
-            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"class : miss a class"<<endl;
+            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"  class : miss a class"<<endl;
     }
 }
 void stu_info::time_log()
@@ -163,19 +137,18 @@ bool probeSniffer::call(PDU& pdu) {
                 if(addr == stu[i].mac && stu[i].l_time != "0")
                     stu[i].l_time = ctime(&now);
             }
-
         }
         catch (runtime_error&) {
         }
         return true;
     }
 }
+
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         cout << "Usage: " <<* argv << " <interface>" << endl;
         return 1;
     }
-    int i;
     // search probe request
     interface = argv[1];
     stu_info student_information;
@@ -184,7 +157,7 @@ int main(int argc, char* argv[]) {
         probeSniffer  probe;
         probe.running(interface);
     }).detach();
-
+    int i;
     stu[0].name="한승균";
     stu[0].mac ="90:00:db:bb:98:c5";
     stu[1].name="백종열";
@@ -203,6 +176,8 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
+
     int select;
     while(1)
     {
@@ -216,7 +191,8 @@ int main(int argc, char* argv[]) {
         {
         case 0 :
             printf("\e[1;1H\e[2J");
-            //student_information.save_info();
+            student_information.save_info();
+
             break;
         case 1:
             printf("\e[1;1H\e[2J");
@@ -232,5 +208,32 @@ int main(int argc, char* argv[]) {
         }
         if(select == 3) break;
         sleep(10);
+
     }
+    MYSQL mysql ;
+    MYSQL_RES   *sql_result;
+    MYSQL_ROW   sql_row;
+    int       query_stat;
+    int connection;
+    mysql_init(&mysql) ;
+
+    if(!mysql_real_connect(&mysql, NULL, "root","123", NULL,3306, (char *)NULL, 0))
+    {
+        printf("%s＼n",mysql_error(&mysql));
+        exit(1) ;}
+    printf("성공적으로 연결되었습니다.＼n");
+    if(!mysql_query(&mysql, "select * from student_information"))
+    {
+        printf("%s＼n",mysql_error(&mysql));
+        exit(1) ;
+    }
+    sql_result = mysql_store_result(&mysql);
+    while((sql_row = mysql_fetch_row(sql_result)) != NULL)
+    {
+        //cout<<sql_row[0]<<endl;
+    }
+
+    mysql_close(&mysql) ;
 }
+
+

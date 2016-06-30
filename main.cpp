@@ -118,7 +118,6 @@ bool probeSniffer::call(PDU& pdu) {
     // Get the AP address
     address_type addr = probe.addr2(); //802.11 header second mac address sniffing
     // Look it up in our set
-    stu_info info;
     ssids_type::iterator it = ssids.find(addr);
     int i;
     //
@@ -157,7 +156,7 @@ int main(int argc, char* argv[]) {
         cout << "Usage: " <<* argv << " <interface>" << endl;
         return 1;
     }
-    int i;
+    //int i;
     // search probe request
     interface = argv[1];
     stu_info student_information;
@@ -166,7 +165,7 @@ int main(int argc, char* argv[]) {
         probeSniffer  probe;
         probe.running(interface);
     }).detach();
-
+/*
     stu[0].name="한승균";
     stu[0].mac ="90:00:db:bb:98:c5";
     stu[1].name="백종열";
@@ -185,6 +184,7 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+    */
     int select;
     while(1)
     {
@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
         {
         case 0 :
             printf("\e[1;1H\e[2J");
-            //student_information.save_info();
+            student_information.save_info();
             break;
         case 1:
             printf("\e[1;1H\e[2J");
@@ -214,5 +214,6 @@ int main(int argc, char* argv[]) {
         }
         if(select == 3) break;
         sleep(10);
+
     }
 }

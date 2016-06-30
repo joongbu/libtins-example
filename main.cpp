@@ -6,8 +6,6 @@
 #include <thread>
 #include <time.h>
 #include <unistd.h>
-#include <mysql/mysql.h>
-#include <errno.h>
 using std::cin;
 using std::set;
 using std::cout;
@@ -15,12 +13,14 @@ using std::endl;
 using std::string;
 using std::runtime_error;
 using namespace Tins;
+using namespace std;
 typedef Dot11::address_type address_type; //mac address
 typedef set<address_type> ssids_type; //ssid
 ssids_type ssids;
 string interface;
 /*=======================time*/
 time_t now;
+
 /*=======================time*/
 struct student
 {
@@ -41,20 +41,10 @@ public :
     void save_info();
     void attendance();
     void time_log();
-    friend istream & operator>>(istream &is);
-
-
 private:
 
 
 };
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-istream &operator>>(isstram &is);
-{
-    typedef Dot11::address_type address_type; //mac address
-
-}
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void stu_info::save_info()
 {
     int i ;
@@ -63,8 +53,8 @@ void stu_info::save_info()
         cout<<"input student name :";
         cin>>stu[i].name;
         cout<<"input student mac address :";
-        //cin>>stu[i].mac;
-        //scanf("%s",&stu[i].mac);
+        //cin>>stu.mac;
+        scanf("%s",&stu[i].mac);
         ssids_type::iterator it = ssids.find(stu[i].mac);
         if(it == ssids.end()){
             try{
@@ -84,9 +74,9 @@ void stu_info::attendance()
     for(i = 0 ; i<size ; i++)
     {
         if(stu[i].check == true)
-            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"  class : attendance"<<endl;
+            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"class : attandence"<<endl;
         else if(stu[i].check == false)
-            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"  class : miss a class"<<endl;
+            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"class : miss a class"<<endl;
     }
 }
 void stu_info::time_log()
@@ -146,18 +136,19 @@ bool probeSniffer::call(PDU& pdu) {
                 if(addr == stu[i].mac && stu[i].l_time != "0")
                     stu[i].l_time = ctime(&now);
             }
+
         }
         catch (runtime_error&) {
         }
         return true;
     }
 }
-
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         cout << "Usage: " <<* argv << " <interface>" << endl;
         return 1;
     }
+    int i;
     // search probe request
     interface = argv[1];
     stu_info student_information;
@@ -166,7 +157,7 @@ int main(int argc, char* argv[]) {
         probeSniffer  probe;
         probe.running(interface);
     }).detach();
-    int i;
+
     stu[0].name="한승균";
     stu[0].mac ="90:00:db:bb:98:c5";
     stu[1].name="백종열";
@@ -185,8 +176,6 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-
-
     int select;
     while(1)
     {
@@ -200,8 +189,7 @@ int main(int argc, char* argv[]) {
         {
         case 0 :
             printf("\e[1;1H\e[2J");
-            student_information.save_info();
-
+            //student_information.save_info();
             break;
         case 1:
             printf("\e[1;1H\e[2J");
@@ -217,32 +205,6 @@ int main(int argc, char* argv[]) {
         }
         if(select == 3) break;
         sleep(10);
-
     }
-    MYSQL mysql ;
-    MYSQL_RES   *sql_result;
-    MYSQL_ROW   sql_row;
-    int       query_stat;
-    int connection;
-    mysql_init(&mysql) ;
-
-    if(!mysql_real_connect(&mysql, NULL, "root","123", NULL,3306, (char *)NULL, 0))
-    {
-        printf("%s＼n",mysql_error(&mysql));
-        exit(1) ;}
-    printf("성공적으로 연결되었습니다.＼n");
-    if(!mysql_query(&mysql, "select * from student_information"))
-    {
-        printf("%s＼n",mysql_error(&mysql));
-        exit(1) ;
-    }
-    sql_result = mysql_store_result(&mysql);
-    while((sql_row = mysql_fetch_row(sql_result)) != NULL)
-    {
-        //cout<<sql_row[0]<<endl;
-    }
-
-    mysql_close(&mysql) ;
 }
-
 

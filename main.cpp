@@ -1,31 +1,3 @@
-/*
- * Copyright (c) 2016, Matias Fontanini
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * * Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above
- *   copyright notice, this list of conditions and the following disclaimer
- *   in the documentation and/or other materials provided with the
- *   distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
 #include <iostream>
 #include <stdio.h>
 #include <set>
@@ -41,6 +13,7 @@ using std::endl;
 using std::string;
 using std::runtime_error;
 using namespace Tins;
+using namespace std;
 typedef Dot11::address_type address_type; //mac address
 typedef set<address_type> ssids_type; //ssid
 ssids_type ssids;
@@ -64,7 +37,7 @@ class stu_info
 {
 
 public :
-
+    typedef HWAddress<6> HW;
     void save_info();
     void attendance();
     void time_log();
@@ -72,17 +45,18 @@ private:
 
 
 };
-/*
 void stu_info::save_info()
 {
     int i ;
+
+    string address;
     for(i = 0 ; i < size ; i++)
     {
         cout<<"input student name :";
         cin>>stu[i].name;
         cout<<"input student mac address :";
-        //cin>>stu.mac;
-        scanf("%s",&stu[i].mac);
+        cin>>address;
+        stu[i].mac = HW(address);
         ssids_type::iterator it = ssids.find(stu[i].mac);
         if(it == ssids.end()){
             try{
@@ -95,7 +69,7 @@ void stu_info::save_info()
         }
     }
 }
-*/
+
 void stu_info::attendance()
 {
     int i;
@@ -144,13 +118,17 @@ bool probeSniffer::call(PDU& pdu) {
     // Get the AP address
     address_type addr = probe.addr2(); //802.11 header second mac address sniffing
     // Look it up in our set
+    stu_info info;
     ssids_type::iterator it = ssids.find(addr);
     int i;
+    //
+    if (it == ssids.end())
+        cout<<"ap"<<endl;
+    //
     if (it != ssids.end()) {
         // First time we encounter this BSSID.
         try {
-            //info.time_log();
-            cout<<"!!!!!!!!!!!!!!!!!"<<endl;
+            cout<<"!!!!!!!!!!!!!!"<<endl;
 
             for(i = 0; i<size ; i++)
             {
@@ -159,19 +137,21 @@ bool probeSniffer::call(PDU& pdu) {
                     stu[i].check = true;
                     stu[i].s_time = ctime(&now);
                 }
-                it = ssids.find(stu[i].mac);
                 if(addr == stu[i].mac && stu[i].l_time == "0")
                     stu[i].l_time = ctime(&now);
                 if(addr == stu[i].mac && stu[i].l_time != "0")
                     stu[i].l_time = ctime(&now);
             }
 
+
         }
         catch (runtime_error&) {
         }
-        return true;
+
     }
+            return true;
 }
+
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         cout << "Usage: " <<* argv << " <interface>" << endl;
@@ -206,7 +186,6 @@ int main(int argc, char* argv[]) {
         }
     }
     int select;
-
     while(1)
     {
         printf("\e[1;1H\e[2J");
@@ -234,7 +213,6 @@ int main(int argc, char* argv[]) {
             break;
         }
         if(select == 3) break;
-        sleep(1);
-
+        sleep(10);
     }
 }

@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <mysql/mysql.h>
 #include <errno.h>
-
 using std::cin;
 using std::set;
 using std::cout;
@@ -21,36 +20,40 @@ using namespace std;
 using namespace Tins;
 typedef Dot11::address_type address_type; //mac address
 typedef set<address_type> ssids_type; //ssid
+typedef set<string> attendance; //ssid
 ssids_type ssids;
+attendance atten;
 string interface;
-/*=======================time*/
-time_t now;
-/*=======================time*/
 string address; //mac address
 struct student
 {
     string name;
     address_type mac;
-    string s_time = "0";
-    string l_time = "0";
     string attendacne = "0";
     bool check = false;
 
 };
-int size = 3;
-student stu[3];
+int size = 0;
+student stu[500]; //vector 이용해보기
+//time
+time_t curr_time;
+struct tm *curr_tm;
+/*
 class DB
 {
+private :
+
 public :
     void insertdata(int i, int select);
+    void print();
 };
+
+
 void DB::insertdata(int i,int select)
 {
     MYSQL mysql ;
     MYSQL_RES* res ;
-     std::string query1 = "INSERT INTO impormation (name,mac) VALUES ('"+stu[i].name+"','"+address+"')";
-     std::string query2 = "INSERT INTO timelog (name,start_time,last_time) VALUES ('"+stu[i].name+"','"+stu[i].s_time+"','"+stu[i].l_time+"')";
-     std::string query3 = "INSERT INTO attendance (name,attendance) VALUES ('"+stu[i].name+"','"+stu[i].attendacne+"')";
+    std::string query1 = "INSERT INTO impormation (name,mac) VALUES ('"+stu[i].name+"','"+address+"')";
     //MYSQL_ROW row ;
     mysql_init(&mysql) ;
     //int field;
@@ -59,55 +62,109 @@ void DB::insertdata(int i,int select)
         printf("%s＼n",mysql_error(&mysql));
         exit(1) ;
     }
-    printf("성공적으로 연결되었습니다.\n") ;
+    printf("database connect...\n") ;
+    if(mysql_query(&mysql, "USE student_data") )
+    {
+        printf("%s＼n", mysql_error(&mysql));
+        exit(1) ;기
+
+    }//switch로 바꾸기
+    if(select == 1)
+    {
+        if(mysql_query(&mysql,query1.c_str()))
+        {
+            printf("%s＼n", mysql_error(&mysql));
+            cout<<"student impormation database save"<<endl;
+            exit(1) ;
+
+        }
+    }
+    if(select == 2)
+    {
+        if(mysql_query(&mysql,query2.c_str()))
+        {
+            printf("%s＼n", mysql_error(&mysql));
+            cout<<"attendance time log database save"<<endl;
+            exit(1) ;
+
+        }
+    }
+    if(select == 3)
+    {
+        if(mysql_query(&mysql,query3.c_str()))
+        {
+            printf("%s＼n", mysql_error(&mysql));
+            cout<<"attendance impormation database save"<<endl;
+            exit(1) ;
+
+        }
+    }
+
+    res = mysql_store_result( &mysql );
+    mysql_free_result( res ) ;
+    mysql_close(&mysql) ;
+}
+void DB::print()
+{
+    MYSQL mysql ;
+    MYSQL_RES* res ;
+    std::string query1 = "select * from impormation";
+
+    MYSQL_ROW row ;
+    mysql_init(&mysql) ;
+    int field;
+    if(!mysql_real_connect(&mysql, NULL, "root","123","student_data",3306, (char *)NULL, 0))
+    {
+        printf("%s＼n",mysql_error(&mysql));
+        exit(1) ;
+    }
+    printf("database connect...\n") ;
     if(mysql_query(&mysql, "USE student_data") )
     {
         printf("%s＼n", mysql_error(&mysql));
         exit(1) ;
 
     }
-    if(select == 1)
-    {
     if(mysql_query(&mysql,query1.c_str()))
     {
         printf("%s＼n", mysql_error(&mysql));
-        //exit(1) ;
+        cout<<"student impormation database save"<<endl;
+        exit(1) ;
 
     }
-    }
-    if(select == 2)
-    {
-    if(mysql_query(&mysql,query2.c_str()))
-    {
-        printf("%s＼n", mysql_error(&mysql));
-        //exit(1) ;
-
-    }
-    }
-    if(select == 3)
-    {
-    if(mysql_query(&mysql,query3.c_str()))
-    {
-        printf("%s＼n", mysql_error(&mysql));
-        //exit(1) ;
-
-    }
-    }
-
     res = mysql_store_result( &mysql );
-    //field = mysql_num_fields(res);
-    //database table impormation print
-    /*
-while( ( row = mysql_fetch_row( res ) ))
-{
-    for(int cnt = 0 ; cnt < field ; ++cnt)
-    printf("%12s",row[cnt]);
-    printf("\n");
-}
-*/
+    field = mysql_num_fields(res);
+
+            while( ( row = mysql_fetch_row( res ) ))
+    {
+        for(int cnt = 0 ; cnt < field ; ++cnt)
+            printf("%12s",row[cnt]);
+        printf("\n");
+    }
     mysql_free_result( res ) ;
     mysql_close(&mysql) ;
 }
+*/
+class clear_section
+{
+public :
+    void time_setting();
+    void log_section();
+};
+void clear_section::log_section()
+{
+    time_setting();
+    if(curr_tm->tm_min / 5 == 0 && curr_tm->tm_sec == 0)
+    {
+        atten.clear();
+    }
+}
+void clear_section::time_setting()
+{
+    curr_time = time(NULL);
+    curr_tm = localtime(&curr_time);
+}
+
 class stu_info
 {
 
@@ -115,7 +172,6 @@ public :
     friend class DB;
     typedef HWAddress<6> HW;
     void save_info();
-    void attendance();
     void time_log();
 private:
 
@@ -123,8 +179,9 @@ private:
 };
 void stu_info::save_info()
 {
-    DB db;
     int i ;
+    cout<<"input number students :"<<endl;
+    cin>>size;
     for(i = 0 ; i < size ; i++)
     {
         cout<<"input student name :";
@@ -135,7 +192,6 @@ void stu_info::save_info()
         ssids_type::iterator it = ssids.find(stu[i].mac);
         if(it == ssids.end()){
             try{
-                db.insertdata(i,1); //database
                 ssids.insert(stu[i].mac);
                 cout<<"save"<<endl;
             }
@@ -146,38 +202,29 @@ void stu_info::save_info()
     }
 }
 
-void stu_info::attendance()
-{
-    DB db;
-    int i;
-    for(i = 0 ; i<size ; i++)
-    {
-        if(stu[i].check == true)
-        {
-            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"class : "<<stu[i].attendacne<<endl;
-            db.insertdata(i,3);
-        }
-        else if(stu[i].check == false)
-            cout<<"name :"<<stu[i].name<<"time : "<<stu[i].s_time<<"class : miss a class"<<endl;
-    }
-}
 void stu_info::time_log()
 {
-    DB db;
-    time(&now);
     int i;
+    cout << curr_tm->tm_year + 1900 << "year " << curr_tm->tm_mon + 1 << "month " << curr_tm->tm_mday << "day ";
+    cout << curr_tm->tm_hour << "hour " << curr_tm->tm_min << "min "<< endl;
     for(i = 0 ; i < size ; i++)
     {
-        try{
-            cout<<"name :"<<stu[i].name<<endl;
-            cout<<"start time :"<<stu[i].s_time<<"last time :"<<stu[i].l_time<<endl;
-            if(stu[i].s_time != "0" && stu[i].l_time != "0")
-            db.insertdata(i,2);
+        try
+        {
+            attendance::iterator it = atten.find(stu[i].name);
+            if(it != atten.end())
+                cout<<"name :"<<stu[i].name<<"mac :"<<stu[i].mac<<endl;
+
         }
-        catch(runtime_error&) {
-            // No ssid, just ignore it.
+        catch(runtime_error&)
+        {
+            //No ssid, just ignore it.
         }
+
     }
+    cout<<"courrent_student : "<<i<<endl;
+
+
 }
 
 class probeSniffer {
@@ -195,37 +242,34 @@ void probeSniffer::running(const std::string& iface) {
     sniffer.sniff_loop(make_sniffer_handler(this, &probeSniffer::call));
 }
 bool probeSniffer::call(PDU& pdu) {
-    time(&now);
     // Get the Dot11 layer
     const Dot11ProbeRequest& probe = pdu.rfind_pdu<Dot11ProbeRequest>();
-    // Get the AP address
+    // Get the proberequest address
     address_type addr = probe.addr2(); //802.11 header second mac address sniffing
     // Look it up in our set
     ssids_type::iterator it = ssids.find(addr);
     int i;
     if (it != ssids.end()) {
-        // First time we encounter this BSSID.
-        try {
+        try
+        {
             for(i = 0; i<size ; i++)
             {
-                if(addr == stu[i].mac && stu[i].s_time == "0")
+                if(addr == stu[i].mac)
                 {
-                    stu[i].check = true;
-                    stu[i].attendacne = "attendance";
-                    stu[i].s_time = ctime(&now);
+                    //attendance::iterator it1 = atten.find(stu[i].name);
+                    //if(it1 == atten.end())
+                    //atten.insert(stu[i].name);
+
                 }
-                if(addr == stu[i].mac && stu[i].l_time == "0")
-                    stu[i].l_time = ctime(&now);
-                if(addr == stu[i].mac && stu[i].l_time != "0")
-                    stu[i].l_time = ctime(&now);
+
+
             }
-
-
         }
-        catch (runtime_error&) {
+        catch (runtime_error&)
+        {
         }
-
     }
     return true;
 }
+
 #endif // ATTENDANCE_H

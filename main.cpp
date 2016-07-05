@@ -9,18 +9,20 @@ int main(int argc, char* argv[]) {
     // search probe request
     interface = argv[1];
     stu_info student_information;
+    size = 3;
     std::thread([] {
         probeSniffer  probe;
         probe.running(interface);
     }).detach();
-/*
+
+
     stu[0].name="한승균";
     stu[0].mac ="90:00:db:bb:98:c5";
     stu[1].name="백종열";
     stu[1].mac ="64:bc:0c:68:e5:71";
     stu[2].name ="이혜빈";
     stu[2].mac = "48:59:29:f4:a5:87";
-    */
+
     int i;
     for(i=0;i<size;i++)
     {
@@ -47,11 +49,11 @@ int main(int argc, char* argv[]) {
         {
         case 0 :
             printf("\e[1;1H\e[2J");
-            student_information.save_info();
+            //student_information.save_info();
             break;
         case 1:
             printf("\e[1;1H\e[2J");
-            student_information.attendance();
+            //student_information.attendance();
             break;
         case 2:
             printf("\e[1;1H\e[2J");
